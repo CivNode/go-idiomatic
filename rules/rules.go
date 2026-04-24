@@ -1,8 +1,8 @@
 // Package rules implements the built-in pedagogical rules for go-idiomatic.
 //
-// Every rule is a value exposing the goidiomatic.Rule interface and also
-// exposes an *analysis.Analyzer via Analyzer / Analyzers so it can be
-// plugged into singlechecker, multichecker, or analysistest.Run.
+// Every rule is a value exposing the Rule interface and also exposes an
+// *analysis.Analyzer via Analyzer / Analyzers so it can be plugged into
+// singlechecker, multichecker, or analysistest.Run.
 package rules
 
 import (
@@ -12,13 +12,11 @@ import (
 	"go/types"
 
 	"golang.org/x/tools/go/analysis"
-
-	goidiomatic "github.com/CivNode/go-idiomatic"
 )
 
 // All returns every built-in rule in a stable order.
-func All() []goidiomatic.Rule {
-	return []goidiomatic.Rule{
+func All() []Rule {
+	return []Rule{
 		PreferRangeInt,
 		ErrorsIsAs,
 		AnyOverEmptyInterface,
@@ -37,12 +35,12 @@ var Analyzer = newAnalyzer("goidiomatic", "pedagogical Go-idiom checks beyond go
 func Analyzers() map[string]*analysis.Analyzer {
 	out := make(map[string]*analysis.Analyzer, len(All()))
 	for _, r := range All() {
-		out[r.ID()] = newAnalyzer(r.ID(), r.Description(), []goidiomatic.Rule{r})
+		out[r.ID()] = newAnalyzer(r.ID(), r.Description(), []Rule{r})
 	}
 	return out
 }
 
-func newAnalyzer(name, doc string, rs []goidiomatic.Rule) *analysis.Analyzer {
+func newAnalyzer(name, doc string, rs []Rule) *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name: analyzerName(name),
 		Doc:  doc,
@@ -100,7 +98,7 @@ func positionToPos(pass *analysis.Pass, p token.Position) token.Pos {
 // Run parses src as a single Go file in a synthetic package and runs the
 // given rule against it. It is a test-oriented helper that does not require
 // module resolution or GOPATH.
-func Run(rule goidiomatic.Rule, src []byte) ([]goidiomatic.Finding, error) {
+func Run(rule Rule, src []byte) ([]Finding, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "src.go", src, parser.AllErrors)
 	if err != nil {

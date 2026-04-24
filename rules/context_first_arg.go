@@ -5,14 +5,12 @@ import (
 	"go/types"
 
 	"golang.org/x/tools/go/analysis"
-
-	goidiomatic "github.com/CivNode/go-idiomatic"
 )
 
 // ContextFirstArg flags functions that take context.Context as any
 // parameter other than the first. The Go convention is that Context is
 // always the first parameter, named ctx.
-var ContextFirstArg goidiomatic.Rule = contextFirstArg{}
+var ContextFirstArg Rule = contextFirstArg{}
 
 type contextFirstArg struct{}
 
@@ -21,10 +19,10 @@ func (contextFirstArg) Name() string { return "context.Context must be first par
 func (contextFirstArg) Description() string {
 	return "By convention context.Context is always the first parameter of a function, conventionally named ctx."
 }
-func (contextFirstArg) Severity() goidiomatic.Severity { return goidiomatic.Warn }
+func (contextFirstArg) Severity() Severity { return Warn }
 
-func (r contextFirstArg) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
-	var out []goidiomatic.Finding
+func (r contextFirstArg) Check(pass *analysis.Pass) ([]Finding, error) {
+	var out []Finding
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			var params *ast.FieldList
@@ -53,7 +51,7 @@ func (r contextFirstArg) Check(pass *analysis.Pass) ([]goidiomatic.Finding, erro
 					n = 1
 				}
 				if idx > 0 && isContextType(pass, field.Type) {
-					out = append(out, goidiomatic.Finding{
+					out = append(out, Finding{
 						RuleID:   r.ID(),
 						Message:  "context.Context must be the first parameter",
 						Pos:      pass.Fset.Position(field.Pos()),

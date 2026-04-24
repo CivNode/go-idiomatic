@@ -6,8 +6,6 @@ import (
 	"go/types"
 
 	"golang.org/x/tools/go/analysis"
-
-	goidiomatic "github.com/CivNode/go-idiomatic"
 )
 
 // ErrorsIsAs flags two common anti-patterns:
@@ -18,7 +16,7 @@ import (
 // Both should use errors.Is (or errors.As for type switches) so wrapped
 // errors still match. The check is structural, augmented with type info
 // when it is available.
-var ErrorsIsAs goidiomatic.Rule = errorsIsAs{}
+var ErrorsIsAs Rule = errorsIsAs{}
 
 type errorsIsAs struct{}
 
@@ -27,10 +25,10 @@ func (errorsIsAs) Name() string { return "prefer errors.Is / errors.As" }
 func (errorsIsAs) Description() string {
 	return "Comparing err.Error() to a string, or an error value to a sentinel with ==, misses wrapped errors. Use errors.Is or errors.As."
 }
-func (errorsIsAs) Severity() goidiomatic.Severity { return goidiomatic.Warn }
+func (errorsIsAs) Severity() Severity { return Warn }
 
-func (r errorsIsAs) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
-	var out []goidiomatic.Finding
+func (r errorsIsAs) Check(pass *analysis.Pass) ([]Finding, error) {
+	var out []Finding
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			bin, ok := n.(*ast.BinaryExpr)
@@ -39,7 +37,7 @@ func (r errorsIsAs) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
 			}
 
 			if msg, hit := errorStringCompare(bin); hit {
-				out = append(out, goidiomatic.Finding{
+				out = append(out, Finding{
 					RuleID:   r.ID(),
 					Message:  msg,
 					Pos:      pass.Fset.Position(bin.Pos()),
@@ -48,7 +46,7 @@ func (r errorsIsAs) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
 				return true
 			}
 			if msg, hit := errorSentinelCompare(pass, bin); hit {
-				out = append(out, goidiomatic.Finding{
+				out = append(out, Finding{
 					RuleID:   r.ID(),
 					Message:  msg,
 					Pos:      pass.Fset.Position(bin.Pos()),

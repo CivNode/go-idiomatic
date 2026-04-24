@@ -7,15 +7,13 @@ import (
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
-
-	goidiomatic "github.com/CivNode/go-idiomatic"
 )
 
 // AnyOverEmptyInterface flags uses of interface{} and suggests any, but
 // only when the build context's language version is Go 1.18 or newer. On
 // older targets the suggestion would be a compile error, so the rule stays
 // silent.
-var AnyOverEmptyInterface goidiomatic.Rule = anyOverEmptyInterface{}
+var AnyOverEmptyInterface Rule = anyOverEmptyInterface{}
 
 type anyOverEmptyInterface struct{}
 
@@ -24,14 +22,14 @@ func (anyOverEmptyInterface) Name() string { return "prefer any over interface{}
 func (anyOverEmptyInterface) Description() string {
 	return "Since Go 1.18 the predeclared alias any reads more cleanly than interface{}. This rule only fires when the module language version is 1.18 or newer."
 }
-func (anyOverEmptyInterface) Severity() goidiomatic.Severity { return goidiomatic.Info }
+func (anyOverEmptyInterface) Severity() Severity { return Info }
 
-func (r anyOverEmptyInterface) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
-	if !goLangAtLeast(1, 18) {
+func (r anyOverEmptyInterface) Check(pass *analysis.Pass) ([]Finding, error) {
+	if !releaseAtLeast(build.Default.ReleaseTags, 1, 18) {
 		return nil, nil
 	}
 
-	var out []goidiomatic.Finding
+	var out []Finding
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			it, ok := n.(*ast.InterfaceType)
@@ -41,7 +39,7 @@ func (r anyOverEmptyInterface) Check(pass *analysis.Pass) ([]goidiomatic.Finding
 			if it.Methods == nil || len(it.Methods.List) != 0 {
 				return true
 			}
-			out = append(out, goidiomatic.Finding{
+			out = append(out, Finding{
 				RuleID:   r.ID(),
 				Message:  "use any instead of interface{} on Go 1.18+",
 				Pos:      pass.Fset.Position(it.Pos()),
@@ -53,18 +51,16 @@ func (r anyOverEmptyInterface) Check(pass *analysis.Pass) ([]goidiomatic.Finding
 	return out, nil
 }
 
-// goLangAtLeast reports whether the current build language is at least the
-// given major.minor. It consults build.Default.ReleaseTags, which is the
-// canonical way to learn the target Go version in a package-loading context.
-func goLangAtLeast(major, minor int) bool {
-	tags := build.Default.ReleaseTags
+// releaseAtLeast reports whether the given release tags contain a Go
+// version equal to or newer than major.minor. Extracted so tests can pass
+// synthetic tag lists in, rather than depending on the host toolchain.
+func releaseAtLeast(tags []string, major, minor int) bool {
 	want := "go" + strconv.Itoa(major) + "." + strconv.Itoa(minor)
 	for _, t := range tags {
 		if t == want {
 			return true
 		}
 	}
-	// If the exact tag is missing but a newer tag exists, still true.
 	for _, t := range tags {
 		if !strings.HasPrefix(t, "go") {
 			continue

@@ -6,14 +6,12 @@ import (
 	"go/token"
 
 	"golang.org/x/tools/go/analysis"
-
-	goidiomatic "github.com/CivNode/go-idiomatic"
 )
 
 // PreferRangeInt flags classic indexed loops that could be rewritten with
 // range, for example for i := 0; i < len(xs); i++. It ignores countdowns
 // and steps other than i++.
-var PreferRangeInt goidiomatic.Rule = preferRangeInt{}
+var PreferRangeInt Rule = preferRangeInt{}
 
 type preferRangeInt struct{}
 
@@ -22,10 +20,10 @@ func (preferRangeInt) Name() string { return "prefer range over indexed for" }
 func (preferRangeInt) Description() string {
 	return "Classic for i := 0; i < len(x); i++ loops can be written as for i := range x, which is shorter and harder to misuse."
 }
-func (preferRangeInt) Severity() goidiomatic.Severity { return goidiomatic.Info }
+func (preferRangeInt) Severity() Severity { return Info }
 
-func (r preferRangeInt) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
-	var out []goidiomatic.Finding
+func (r preferRangeInt) Check(pass *analysis.Pass) ([]Finding, error) {
+	var out []Finding
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			loop, ok := n.(*ast.ForStmt)
@@ -37,7 +35,7 @@ func (r preferRangeInt) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error
 				return true
 			}
 			pos := pass.Fset.Position(loop.Pos())
-			out = append(out, goidiomatic.Finding{
+			out = append(out, Finding{
 				RuleID:   r.ID(),
 				Message:  fmt.Sprintf("prefer `for i := range %s` over classic indexed loop", target),
 				Pos:      pos,

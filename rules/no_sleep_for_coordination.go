@@ -6,14 +6,12 @@ import (
 	"go/types"
 
 	"golang.org/x/tools/go/analysis"
-
-	goidiomatic "github.com/CivNode/go-idiomatic"
 )
 
 // NoSleepForCoordination flags time.Sleep calls inside a function that
 // also uses a channel operation or a context.Context. Sleeping as a way
 // to wait for "the other thing" to happen is almost always a race.
-var NoSleepForCoordination goidiomatic.Rule = noSleepForCoordination{}
+var NoSleepForCoordination Rule = noSleepForCoordination{}
 
 type noSleepForCoordination struct{}
 
@@ -22,10 +20,10 @@ func (noSleepForCoordination) Name() string { return "no time.Sleep for coordina
 func (noSleepForCoordination) Description() string {
 	return "Using time.Sleep to wait for another goroutine or a context deadline is a race. Prefer channel receives, sync primitives, or context.Done."
 }
-func (noSleepForCoordination) Severity() goidiomatic.Severity { return goidiomatic.Error }
+func (noSleepForCoordination) Severity() Severity { return Error }
 
-func (r noSleepForCoordination) Check(pass *analysis.Pass) ([]goidiomatic.Finding, error) {
-	var out []goidiomatic.Finding
+func (r noSleepForCoordination) Check(pass *analysis.Pass) ([]Finding, error) {
+	var out []Finding
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			var body *ast.BlockStmt
@@ -35,7 +33,7 @@ func (r noSleepForCoordination) Check(pass *analysis.Pass) ([]goidiomatic.Findin
 				if body != nil && v.Type != nil {
 					if hasContextParam(pass, v.Type.Params) {
 						if pos, ok := findSleep(body); ok {
-							out = append(out, goidiomatic.Finding{
+							out = append(out, Finding{
 								RuleID:   r.ID(),
 								Message:  "time.Sleep alongside context.Context looks like coordination; use ctx.Done()",
 								Pos:      pass.Fset.Position(pos),
@@ -49,7 +47,7 @@ func (r noSleepForCoordination) Check(pass *analysis.Pass) ([]goidiomatic.Findin
 				body = v.Body
 				if body != nil && v.Type != nil && hasContextParam(pass, v.Type.Params) {
 					if pos, ok := findSleep(body); ok {
-						out = append(out, goidiomatic.Finding{
+						out = append(out, Finding{
 							RuleID:   r.ID(),
 							Message:  "time.Sleep alongside context.Context looks like coordination; use ctx.Done()",
 							Pos:      pass.Fset.Position(pos),
@@ -69,7 +67,7 @@ func (r noSleepForCoordination) Check(pass *analysis.Pass) ([]goidiomatic.Findin
 				return true
 			}
 			if pos, ok := findSleep(body); ok {
-				out = append(out, goidiomatic.Finding{
+				out = append(out, Finding{
 					RuleID:   r.ID(),
 					Message:  "time.Sleep alongside channel operations looks like coordination; use a channel receive or select",
 					Pos:      pass.Fset.Position(pos),
