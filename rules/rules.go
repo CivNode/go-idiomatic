@@ -21,6 +21,7 @@ func All() []goidiomatic.Rule {
 	return []goidiomatic.Rule{
 		PreferRangeInt,
 		ErrorsIsAs,
+		AnyOverEmptyInterface,
 	}
 }
 
