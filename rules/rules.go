@@ -23,6 +23,7 @@ func All() []goidiomatic.Rule {
 		ErrorsIsAs,
 		AnyOverEmptyInterface,
 		ContextFirstArg,
+		NoSleepForCoordination,
 	}
 }
 
