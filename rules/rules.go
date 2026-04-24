@@ -68,7 +68,7 @@ func newAnalyzer(name, doc string, rs []Rule) *analysis.Analyzer {
 // analysis framework requires the name to be a valid Go identifier.
 func analyzerName(id string) string {
 	out := make([]byte, 0, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range len(id) {
 		c := id[i]
 		if c == '-' {
 			out = append(out, '_')
@@ -135,6 +135,7 @@ func (nopImporter) Import(path string) (*types.Package, error) {
 }
 
 func lastSegment(path string) string {
+	// Intentional right-to-left walk; prefer-range-int leaves it alone.
 	for i := len(path) - 1; i >= 0; i-- {
 		if path[i] == '/' {
 			return path[i+1:]
